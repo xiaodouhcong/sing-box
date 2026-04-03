@@ -47,6 +47,7 @@ jobs:
         with:
           repository: xiaodouhcong/sing-box-for-apple
           path: sing-box-for-apple
+          ref: dev
           fetch-depth: 0
           submodules: recursive
 
