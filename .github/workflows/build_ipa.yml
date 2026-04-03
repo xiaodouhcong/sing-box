@@ -64,7 +64,7 @@ jobs:
           cp -r *.xcframework sing-box-for-apple/ 2>/dev/null || true
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
 
       - name: Build IPA (unsigned, for TrollStore)
         working-directory: sing-box-for-apple
@@ -79,7 +79,8 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             DEVELOPMENT_TEAM="" \
-            | xcbeautify || true
+            OTHER_SWIFT_FLAGS="-enable-experimental-feature IsolatedDeinit" \
+            | xcbeautify
 
           mkdir -p build/SFI-ipa/Payload
           cp -r build/SFI.xcarchive/Products/Applications/*.app build/SFI-ipa/Payload/
