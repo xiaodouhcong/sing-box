@@ -33,18 +33,16 @@ jobs:
           repository: xiaodouhcong/sing-box-for-apple
           path: sing-box-for-apple
           fetch-depth: 0
+          submodules: recursive
 
       - name: Copy libbox to apple project
         run: |
-          ls *.xcframework 2>/dev/null || ls *.framework 2>/dev/null || true
-          # copy any generated framework/xcframework into the apple project
           cp -r *.xcframework sing-box-for-apple/ 2>/dev/null || true
           cp -r *.framework sing-box-for-apple/ 2>/dev/null || true
 
       - name: Build IPA (unsigned, for TrollStore)
         working-directory: sing-box-for-apple
         run: |
-          # Build archive without code signing
           xcodebuild archive \
             -scheme SFI \
             -configuration Release \
@@ -56,7 +54,6 @@ jobs:
             DEVELOPMENT_TEAM="" \
             | xcbeautify || true
 
-          # Package the .app into an IPA manually
           mkdir -p build/SFI-ipa/Payload
           cp -r build/SFI.xcarchive/Products/Applications/*.app build/SFI-ipa/Payload/
           cd build/SFI-ipa
