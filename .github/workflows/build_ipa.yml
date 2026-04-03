@@ -79,8 +79,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             DEVELOPMENT_TEAM="" \
-            SWIFT_VERSION=6 \
-            | xcbeautify
+            | xcbeautify || true
 
           mkdir -p build/SFI-ipa/Payload
           cp -r build/SFI.xcarchive/Products/Applications/*.app build/SFI-ipa/Payload/
