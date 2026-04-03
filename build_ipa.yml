@@ -1,0 +1,70 @@
+name: Build IPA (TrollStore)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_ipa:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    steps:
+      - name: Checkout sing-box
+        uses: actions/checkout@v4
+        with:
+          repository: xiaodouhcong/sing-box
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ~1.24
+
+      - name: Install gomobile
+        run: |
+          make lib_install
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Build libbox for Apple
+        run: make lib_apple
+
+      - name: Checkout sing-box-for-apple
+        uses: actions/checkout@v4
+        with:
+          repository: xiaodouhcong/sing-box-for-apple
+          path: sing-box-for-apple
+          fetch-depth: 0
+
+      - name: Copy libbox to apple project
+        run: |
+          ls *.xcframework 2>/dev/null || ls *.framework 2>/dev/null || true
+          # copy any generated framework/xcframework into the apple project
+          cp -r *.xcframework sing-box-for-apple/ 2>/dev/null || true
+          cp -r *.framework sing-box-for-apple/ 2>/dev/null || true
+
+      - name: Build IPA (unsigned, for TrollStore)
+        working-directory: sing-box-for-apple
+        run: |
+          # Build archive without code signing
+          xcodebuild archive \
+            -scheme SFI \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/SFI.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM="" \
+            | xcbeautify || true
+
+          # Package the .app into an IPA manually
+          mkdir -p build/SFI-ipa/Payload
+          cp -r build/SFI.xcarchive/Products/Applications/*.app build/SFI-ipa/Payload/
+          cd build/SFI-ipa
+          zip -r ../SFI.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SFI-TrollStore
+          path: sing-box-for-apple/build/SFI.ipa
+          retention-days: 7
