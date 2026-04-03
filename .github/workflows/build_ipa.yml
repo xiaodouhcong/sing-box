@@ -52,6 +52,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             DEVELOPMENT_TEAM="" \
+            OTHER_SWIFT_FLAGS="-enable-experimental-feature IsolatedDeinit" \
             | xcbeautify || true
 
           mkdir -p build/SFI-ipa/Payload
