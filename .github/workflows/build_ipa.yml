@@ -18,13 +18,28 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ~1.24
+          cache: true
+
+      - name: Cache gomobile
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin
+          key: gomobile-${{ hashFiles('go.mod') }}
 
       - name: Install gomobile
         run: |
           make lib_install
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
+      - name: Cache libbox
+        id: cache-libbox
+        uses: actions/cache@v4
+        with:
+          path: "*.xcframework"
+          key: libbox-${{ hashFiles('go.mod', 'go.sum', 'experimental/libbox/**') }}
+
       - name: Build libbox for Apple
+        if: steps.cache-libbox.outputs.cache-hit != 'true'
         run: make lib_apple
 
       - name: Checkout sing-box-for-apple
@@ -35,10 +50,17 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Cache Xcode DerivedData
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: xcode-deriveddata-${{ hashFiles('sing-box-for-apple/**/*.swift', 'sing-box-for-apple/**/*.xcodeproj') }}
+          restore-keys: |
+            xcode-deriveddata-
+
       - name: Copy libbox to apple project
         run: |
           cp -r *.xcframework sing-box-for-apple/ 2>/dev/null || true
-          cp -r *.framework sing-box-for-apple/ 2>/dev/null || true
 
       - name: Build IPA (unsigned, for TrollStore)
         working-directory: sing-box-for-apple
@@ -48,6 +70,7 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/SFI.xcarchive \
+            -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
